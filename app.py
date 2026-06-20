@@ -126,7 +126,7 @@ with col2:
     value=1.0,
     step=0.1,
     format="%.1f",
-    help="A value measured during a cardiac stress test. Use the value from your medical report."
+    help="Value taken from a cardiac stress test report. Do not guess this value."
 )
 
     thal = st.selectbox(
