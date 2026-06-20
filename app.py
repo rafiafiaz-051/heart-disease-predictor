@@ -1,59 +1,99 @@
 import streamlit as st
-import pandas as pd
-import joblib
 import numpy as np
+import joblib
 
+# Load model & scaler
 model = joblib.load("champion_model.pkl")
 scaler = joblib.load("scaler.pkl")
 
-st.title("Heart Disease Prediction System")
+# ---------------------------
+# DEFAULT VALUES (from dataset approx)
+# ---------------------------
+defaults = {
+    "fbs": 0,
+    "restecg": 1,
+    "oldpeak": 1.0,
+    "slope": 1,
+    "ca": 0,
+    "thal": 2
+}
 
-age = st.number_input("Age", 20, 100, 50)
-sex = st.selectbox("Sex", [0,1])
-cp = st.selectbox("Chest Pain Type", [0,1,2,3])
-trestbps = st.number_input("Resting Blood Pressure", 80, 250, 120)
-chol = st.number_input("Cholesterol", 100, 600, 200)
-fbs = st.selectbox("Fasting Blood Sugar", [0,1])
-restecg = st.selectbox("Rest ECG", [0,1,2])
-thalach = st.number_input("Maximum Heart Rate", 60, 250, 150)
-exang = st.selectbox("Exercise Induced Angina", [0,1])
-oldpeak = st.number_input("Oldpeak", 0.0, 10.0, 1.0)
-slope = st.selectbox("Slope", [0,1,2])
-ca = st.selectbox("CA", [0,1,2,3,4])
-thal = st.selectbox("Thal", [0,1,2,3])
+# ---------------------------
+# PAGE CONFIG
+# ---------------------------
+st.set_page_config(page_title="Heart Risk App", page_icon="💓", layout="centered")
 
-age_group_encoded = 0
+st.markdown("""
+    <style>
+    .main { background-color: #f5f7ff; }
+    h1 { color: #c9184a; text-align:center; }
+    </style>
+""", unsafe_allow_html=True)
 
-if age < 40:
-    age_group_encoded = 0
-elif age < 55:
-    age_group_encoded = 1
-elif age < 65:
-    age_group_encoded = 2
-else:
-    age_group_encoded = 3
+st.title("💓 Heart Disease Risk Predictor")
+st.write("Enter basic patient details to predict risk")
 
-chol_high = 1 if chol > 240 else 0
+st.markdown("---")
 
-if st.button("Predict"):
+# ---------------------------
+# SIMPLE USER INPUTS
+# ---------------------------
+age = st.slider("Age", 20, 100, 40)
 
-    data = pd.DataFrame([[
-        age, sex, cp, trestbps, chol,
-        fbs, restecg, thalach, exang,
-        oldpeak, slope, ca, thal,
-        age_group_encoded, chol_high
-    ]], columns=[
-        'age','sex','cp','trestbps','chol',
-        'fbs','restecg','thalach','exang',
-        'oldpeak','slope','ca','thal',
-        'age_group_encoded','chol_high'
-    ])
+sex = st.selectbox("Gender", ["Male", "Female"])
+sex = 1 if sex == "Male" else 0
 
-    data_scaled = scaler.transform(data)
+cp = st.selectbox("Chest Pain Type", [
+    "Typical Angina",
+    "Atypical Angina",
+    "Non-anginal",
+    "Asymptomatic"
+])
+cp = ["Typical Angina","Atypical Angina","Non-anginal","Asymptomatic"].index(cp)
 
-    prediction = model.predict(data_scaled)[0]
+trestbps = st.slider("Resting Blood Pressure", 80, 200, 120)
 
+chol = st.slider("Cholesterol", 100, 600, 200)
+
+thalach = st.slider("Max Heart Rate", 60, 220, 150)
+
+exang = st.selectbox("Exercise Induced Angina", ["No", "Yes"])
+exang = 1 if exang == "Yes" else 0
+
+st.markdown("---")
+
+# ---------------------------
+# PREDICTION
+# ---------------------------
+if st.button("🔍 Predict Risk"):
+
+    # FULL 13-FEATURE INPUT (IMPORTANT ORDER MUST MATCH MODEL)
+    input_data = np.array([[
+        age,
+        sex,
+        cp,
+        trestbps,
+        chol,
+        defaults["fbs"],
+        defaults["restecg"],
+        thalach,
+        exang,
+        defaults["oldpeak"],
+        defaults["slope"],
+        defaults["ca"],
+        defaults["thal"]
+    ]])
+
+    # scale input
+    input_scaled = scaler.transform(input_data)
+
+    # prediction
+    prediction = model.predict(input_scaled)[0]
+
+    # output
     if prediction == 1:
-        st.error("High Risk of Heart Disease")
+        st.error("⚠ High Risk of Heart Disease")
+        st.write("Consult a doctor for further evaluation.")
     else:
-        st.success("Low Risk of Heart Disease")
+        st.success("✅ Low Risk of Heart Disease")
+        st.write("No major risk detected.")
