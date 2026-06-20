@@ -18,14 +18,14 @@ HIDDEN_MEANS = {
     'chol_high': 0.37,
 }
 
-def predict(age, sex, cp, thalach, ca, oldpeak, thal):
+def predict(age, sex, cp, thalach, ca, oldpeak, thal, chol):
 
     features_13 = [
         age,
         sex,
         cp,
         HIDDEN_MEANS['trestbps'],
-        HIDDEN_MEANS['chol'],
+        chol,
         HIDDEN_MEANS['fbs'],
         HIDDEN_MEANS['restecg'],
         thalach,
@@ -139,6 +139,15 @@ with col2:
     }[x],
     help="Use the value from your medical report."
 )
+    
+    chol = st.number_input(
+    "Cholesterol (mg/dl)",
+    min_value=100,
+    max_value=600,
+    value=200,
+    step=1,
+    help="Blood cholesterol level from lab report"
+)
 
 st.divider()
 
@@ -153,7 +162,8 @@ if st.button("Predict", use_container_width=True, type="primary"):
             thalach,
             ca,
             oldpeak,
-            thal
+            thal,
+            chol
         )
 
         st.subheader("Result")
