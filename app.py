@@ -37,7 +37,6 @@ def predict(age, sex, cp, thalach, ca, oldpeak, thal, chol):
     ]
 
     chol_high = 1 if chol > 240 else 0
-    features_13.append(chol_high)
 
     if N_FEATURES == 15:
 
