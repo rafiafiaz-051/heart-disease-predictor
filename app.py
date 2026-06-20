@@ -36,6 +36,9 @@ def predict(age, sex, cp, thalach, ca, oldpeak, thal, chol):
         thal
     ]
 
+    chol_high = 1 if chol > 240 else 0
+    features_13.append(chol_high)
+
     if N_FEATURES == 15:
 
         if age < 40:
@@ -144,7 +147,7 @@ with col2:
     "Cholesterol (mg/dl)",
     min_value=100,
     max_value=600,
-    value=200,
+    value=240,
     step=1,
     help="Blood cholesterol level from lab report"
 )
