@@ -2,42 +2,21 @@ import streamlit as st
 import numpy as np
 import joblib
 
-# Load model & scaler
+# Load model + scaler
 model = joblib.load("champion_model.pkl")
 scaler = joblib.load("scaler.pkl")
 
-# ---------------------------
-# DEFAULT VALUES (from dataset approx)
-# ---------------------------
-defaults = {
-    "fbs": 0,
-    "restecg": 1,
-    "oldpeak": 1.0,
-    "slope": 1,
-    "ca": 0,
-    "thal": 2
-}
+# Page config
+st.set_page_config(page_title="Heart Disease Predictor", page_icon="💓", layout="centered")
 
-# ---------------------------
-# PAGE CONFIG
-# ---------------------------
-st.set_page_config(page_title="Heart Risk App", page_icon="💓", layout="centered")
-
-st.markdown("""
-    <style>
-    .main { background-color: #f5f7ff; }
-    h1 { color: #c9184a; text-align:center; }
-    </style>
-""", unsafe_allow_html=True)
-
-st.title("💓 Heart Disease Risk Predictor")
-st.write("Enter basic patient details to predict risk")
+st.title("💓 Heart Disease Prediction App")
+st.write("Enter basic details below to predict risk")
 
 st.markdown("---")
 
-# ---------------------------
+# -------------------------
 # SIMPLE USER INPUTS
-# ---------------------------
+# -------------------------
 age = st.slider("Age", 20, 100, 40)
 
 sex = st.selectbox("Gender", ["Male", "Female"])
@@ -62,38 +41,48 @@ exang = 1 if exang == "Yes" else 0
 
 st.markdown("---")
 
-# ---------------------------
+# -------------------------
+# DEFAULT (missing features)
+# -------------------------
+fbs = 0
+restecg = 1
+oldpeak = 1.0
+slope = 1
+ca = 0
+thal = 2
+
+# -------------------------
 # PREDICTION
-# ---------------------------
+# -------------------------
 if st.button("🔍 Predict Risk"):
 
-    # FULL 13-FEATURE INPUT (IMPORTANT ORDER MUST MATCH MODEL)
+    # ⚠️ MUST MATCH TRAINING ORDER (13 FEATURES)
     input_data = np.array([[
         age,
         sex,
         cp,
         trestbps,
         chol,
-        defaults["fbs"],
-        defaults["restecg"],
+        fbs,
+        restecg,
         thalach,
         exang,
-        defaults["oldpeak"],
-        defaults["slope"],
-        defaults["ca"],
-        defaults["thal"]
+        oldpeak,
+        slope,
+        ca,
+        thal
     ]])
 
-    # scale input
+    # scale
     input_scaled = scaler.transform(input_data)
 
-    # prediction
+    # predict
     prediction = model.predict(input_scaled)[0]
 
     # output
     if prediction == 1:
         st.error("⚠ High Risk of Heart Disease")
-        st.write("Consult a doctor for further evaluation.")
+        st.write("Please consult a doctor.")
     else:
         st.success("✅ Low Risk of Heart Disease")
-        st.write("No major risk detected.")
+        st.write("No major risk detected. Stay healthy ❤️")
