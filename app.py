@@ -96,9 +96,9 @@ with col1:
     "Chest Pain Type",
     options=[0, 1, 2, 3],
     format_func=lambda x: {
-        0: "Typical Angina (Pain during physical activity)",
-        1: "Atypical Angina",
-        2: "Non-Anginal Chest Pain",
+        0: "Typical Angina (Chest pain during physical activity)",
+        1: "Atypical Angina (Unusual chest pain that may occur at any time)",
+        2: "Non-Anginal Chest Pain (Chest pain not related to the heart)",
         3: "No Chest Pain Symptoms"
     }[x]
 )
