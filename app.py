@@ -93,15 +93,15 @@ with col1:
     )
 
     cp = st.selectbox(
-        "Chest Pain Type",
-        options=[0, 1, 2, 3],
-        format_func=lambda x: {
-            0: "Typical Angina",
-            1: "Atypical Angina",
-            2: "Non-Anginal Pain",
-            3: "Asymptomatic"
-        }[x]
-    )
+    "Chest Pain Type",
+    options=[0, 1, 2, 3],
+    format_func=lambda x: {
+        0: "Typical Angina (Pain during physical activity)",
+        1: "Atypical Angina",
+        2: "Non-Anginal Chest Pain",
+        3: "No Chest Pain Symptoms"
+    }[x]
+)
 
     thalach = st.number_input(
         "Max Heart Rate (bpm)",
@@ -114,28 +114,31 @@ with col1:
 with col2:
 
     ca = st.selectbox(
-        "Major Vessels Coloured (0–3)",
-        options=[0, 1, 2, 3]
-    )
+    "Number of Major Blood Vessels Visible in Test",
+    options=[0, 1, 2, 3],
+    help="Usually taken from an angiography test. Select the number reported by the doctor."
+)
 
     oldpeak = st.number_input(
-        "ST Depression (oldpeak)",
-        min_value=0.0,
-        max_value=6.5,
-        value=1.0,
-        step=0.1,
-        format="%.1f"
-    )
+    "ST Depression (Oldpeak)",
+    min_value=0.0,
+    max_value=6.5,
+    value=1.0,
+    step=0.1,
+    format="%.1f",
+    help="A value measured during a cardiac stress test. Use the value from your medical report."
+)
 
     thal = st.selectbox(
-        "Thalassemia",
-        options=[1, 2, 3],
-        format_func=lambda x: {
-            1: "Normal",
-            2: "Fixed Defect",
-            3: "Reversible Defect"
-        }[x]
-    )
+    "Thalassemia Test Result",
+    options=[1, 2, 3],
+    format_func=lambda x: {
+        1: "Normal",
+        2: "Fixed Defect",
+        3: "Reversible Defect"
+    }[x],
+    help="Use the value from your medical report."
+)
 
 st.divider()
 
