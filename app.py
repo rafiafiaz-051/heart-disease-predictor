@@ -8,29 +8,26 @@ scaler = joblib.load('scaler.pkl')
 N_FEATURES = scaler.n_features_in_
 
 HIDDEN_MEANS = {
-    'trestbps': 131.6,
     'fbs': 0.15,
     'restecg': 0.53,
-    'exang': 0.33,
-    'slope': 1.40,
     'age_group_encoded': 1.8,
     'chol_high': 0.37
 }
 
-def predict(age, sex, cp, thalach, ca, oldpeak, thal, chol):
+def predict(age, sex, cp, thalach, ca, oldpeak, thal, chol, trestbps, exang, slope):
 
     features_13 = [
         age,
         sex,
         cp,
-        HIDDEN_MEANS['trestbps'],
+        trestbps,
         chol,
         HIDDEN_MEANS['fbs'],
         HIDDEN_MEANS['restecg'],
         thalach,
-        HIDDEN_MEANS['exang'],
+        exang,
         oldpeak,
-        HIDDEN_MEANS['slope'],
+        slope,
         ca,
         thal
     ]
@@ -113,8 +110,27 @@ with col1:
         step=1
     )
 
-with col2:
+    trestbps = st.number_input(
+    "Resting Blood Pressure (mmHg)",
+    min_value=80,
+    max_value=250,
+    value=120,
+    step=1,
+    help="Blood pressure measured while resting."
+)
 
+with col2:
+    
+    exang = st.selectbox(
+    "Exercise Induced Angina",
+    options=[0, 1],
+    format_func=lambda x: {
+        0: "No",
+        1: "Yes"
+    }[x],
+    help="Chest pain triggered during exercise."
+)
+    
     ca = st.selectbox(
     "Number of Major Blood Vessels Visible in Test",
     options=[0, 1, 2, 3],
@@ -129,6 +145,17 @@ with col2:
     step=0.1,
     format="%.1f",
     help="Value taken from a cardiac stress test report. Do not guess this value."
+)
+
+    slope = st.selectbox(
+    "Slope of ST Segment",
+    options=[0, 1, 2],
+    format_func=lambda x: {
+        0: "Upsloping",
+        1: "Flat",
+        2: "Downsloping"
+    }[x],
+    help="Value from ECG stress test report."
 )
 
     thal = st.selectbox(
@@ -157,16 +184,19 @@ if st.button("Predict", use_container_width=True, type="primary"):
 
     try:
 
-        prediction, probability = predict(
-            age,
-            sex,
-            cp,
-            thalach,
-            ca,
-            oldpeak,
-            thal,
-            chol
-        )
+    prediction, probability = predict(
+    age,
+    sex,
+    cp,
+    thalach,
+    ca,
+    oldpeak,
+    thal,
+    chol,
+    trestbps,
+    exang,
+    slope
+)
 
         st.subheader("Result")
 
