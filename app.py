@@ -99,24 +99,58 @@ with col2:
 
 st.divider()
 
-if st.button("Predict", use_container_width=True):
+if st.button("Predict", use_container_width=True, type="primary"):
 
     try:
 
         prediction, probability = predict(
-            age, sex, cp, thalach, ca,
-            oldpeak, thal, chol, trestbps,
-            exang, slope, fbs, restecg
+            age,
+            sex,
+            cp,
+            thalach,
+            ca,
+            oldpeak,
+            thal,
+            chol,
+            trestbps,
+            exang,
+            slope,
+            fbs,
+            restecg
         )
 
         st.subheader("Result")
 
         if prediction == 1:
+
             st.error("Heart Disease Detected")
+
+            st.metric(
+                "Risk Probability",
+                f"{probability}%"
+            )
+
+            st.warning(
+                "This is a screening tool only. Please consult a cardiologist."
+            )
+
         else:
+
             st.success("No Heart Disease Detected")
 
-        st.metric("Risk Probability", f"{probability}%")
+            st.metric(
+                "Risk Probability",
+                f"{probability}%"
+            )
+
+            st.info(
+                "Low risk detected. Maintain a healthy lifestyle and schedule regular check-ups."
+            )
 
     except Exception as e:
+
         st.error(f"Prediction error: {e}")
+
+        st.info(
+            "Please verify that the saved model and scaler files match."
+        )
