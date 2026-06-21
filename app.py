@@ -14,7 +14,7 @@ HIDDEN_MEANS = {
     'exang': 0.33,
     'slope': 1.40,
     'age_group_encoded': 1.8,
-    
+    'chol_high': 0.37
 }
 
 def predict(age, sex, cp, thalach, ca, oldpeak, thal, chol):
@@ -35,7 +35,6 @@ def predict(age, sex, cp, thalach, ca, oldpeak, thal, chol):
         thal
     ]
 
-    chol_high = 1 if chol > 240 else 0
 
     if N_FEATURES == 15:
 
@@ -48,7 +47,7 @@ def predict(age, sex, cp, thalach, ca, oldpeak, thal, chol):
         else:
             age_group = 3
 
-        chol_high = 1 if HIDDEN_MEANS['chol'] > 240 else 0
+        chol_high = 1 if chol > 240 else 0
 
         features_13.append(age_group)
         features_13.append(chol_high)
