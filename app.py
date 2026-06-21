@@ -52,6 +52,8 @@ def predict(age, sex, cp, thalach, ca, oldpeak, thal, chol):
         features_13.append(age_group)
         features_13.append(chol_high)
 
+    print(features_13)
+
     input_data = np.array([features_13])
 
     input_scaled = scaler.transform(input_data)
