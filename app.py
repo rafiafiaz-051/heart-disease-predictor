@@ -14,7 +14,7 @@ HIDDEN_MEANS = {
     'chol_high': 0.37
 }
 
-def predict(age, sex, cp, thalach, ca, oldpeak, thal, chol, trestbps, exang, slope):
+def predict(age, sex, cp, thalach, ca, oldpeak, thal, chol, trestbps, exang, slope, fbs, restecg):
 
     features_13 = [
         age,
@@ -22,8 +22,8 @@ def predict(age, sex, cp, thalach, ca, oldpeak, thal, chol, trestbps, exang, slo
         cp,
         trestbps,
         chol,
-        HIDDEN_MEANS['fbs'],
-        HIDDEN_MEANS['restecg'],
+        fbs,
+        restecg,
         thalach,
         exang,
         oldpeak,
@@ -118,6 +118,22 @@ with col1:
     step=1,
     help="Blood pressure measured while resting."
 )
+    
+    fbs = st.selectbox(
+    "Fasting Blood Sugar > 120 mg/dl",
+    options=[0, 1],
+    format_func=lambda x: "Yes" if x == 1 else "No"
+)
+    
+    restecg = st.selectbox(
+    "Resting ECG Results",
+    options=[0, 1, 2],
+    format_func=lambda x: {
+        0: "Normal",
+        1: "ST-T abnormality",
+        2: "Left ventricular hypertrophy"
+    }[x]
+)
 
 with col2:
     
@@ -184,19 +200,21 @@ if st.button("Predict", use_container_width=True, type="primary"):
 
     try:
 
-        prediction, probability = predict(
-            age,
-            sex,
-            cp,
-            thalach,
-            ca,
-            oldpeak,
-            thal,
-            chol,
-            trestbps,
-            exang,
-            slope
-        )
+    prediction, probability = predict(
+    age,
+    sex,
+    cp,
+    thalach,
+    ca,
+    oldpeak,
+    thal,
+    chol,
+    trestbps,
+    exang,
+    slope,
+    fbs,
+    restecg
+)
 
         st.subheader("Result")
 
