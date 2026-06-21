@@ -9,7 +9,6 @@ N_FEATURES = scaler.n_features_in_
 
 HIDDEN_MEANS = {
     'trestbps': 131.6,
-    'chol': 246.5,
     'fbs': 0.15,
     'restecg': 0.53,
     'exang': 0.33,
