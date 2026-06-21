@@ -7,16 +7,9 @@ scaler = joblib.load('scaler.pkl')
 
 N_FEATURES = scaler.n_features_in_
 
-HIDDEN_MEANS = {
-    'fbs': 0.15,
-    'restecg': 0.53,
-    'age_group_encoded': 1.8,
-    'chol_high': 0.37
-}
-
 def predict(age, sex, cp, thalach, ca, oldpeak, thal, chol, trestbps, exang, slope, fbs, restecg):
 
-    features_13 = [
+    features = [
         age,
         sex,
         cp,
@@ -32,9 +25,10 @@ def predict(age, sex, cp, thalach, ca, oldpeak, thal, chol, trestbps, exang, slo
         thal
     ]
 
-
+    # optional engineered features (ONLY if model expects 15 features)
     if N_FEATURES == 15:
 
+        age_group = 0
         if age < 40:
             age_group = 0
         elif age < 55:
@@ -46,18 +40,17 @@ def predict(age, sex, cp, thalach, ca, oldpeak, thal, chol, trestbps, exang, slo
 
         chol_high = 1 if chol > 240 else 0
 
-        features_13.append(age_group)
-        features_13.append(chol_high)
+        features.append(age_group)
+        features.append(chol_high)
 
-    print(features_13)
-
-    input_data = np.array([features_13])
-
+    input_data = np.array([features])
     input_scaled = scaler.transform(input_data)
+
     prediction = model.predict(input_scaled)[0]
     probability = model.predict_proba(input_scaled)[0][1]
 
     return int(prediction), round(float(probability) * 100, 1)
+
 
 st.set_page_config(
     page_title="Heart Disease Predictor",
@@ -66,188 +59,64 @@ st.set_page_config(
 )
 
 st.title("Heart Disease Risk Predictor")
-
-st.write(
-    "Fill in the fields below and click Predict to assess risk."
-)
-
+st.write("Fill in the fields below and click Predict to assess risk.")
 st.divider()
 
 col1, col2 = st.columns(2)
 
 with col1:
 
-    age = st.number_input(
-        "Age (years)",
-        min_value=20,
-        max_value=80,
-        value=50,
-        step=1
-    )
-
-    sex = st.selectbox(
-        "Gender",
-        options=[1, 0],
-        format_func=lambda x: "Male" if x == 1 else "Female"
-    )
+    age = st.number_input("Age (years)", 20, 80, 50)
+    sex = st.selectbox("Gender", [1, 0], format_func=lambda x: "Male" if x == 1 else "Female")
 
     cp = st.selectbox(
-    "Chest Pain Type",
-    options=[0, 1, 2, 3],
-    format_func=lambda x: {
-        0: "Typical Angina (Chest pain during physical activity)",
-        1: "Atypical Angina (Unusual chest pain that may occur at any time)",
-        2: "Non-Anginal Chest Pain (Chest pain not related to the heart)",
-        3: "No Chest Pain Symptoms"
-    }[x]
-)
-
-    thalach = st.number_input(
-        "Max Heart Rate (bpm)",
-        min_value=70,
-        max_value=210,
-        value=150,
-        step=1
+        "Chest Pain Type",
+        [0, 1, 2, 3],
+        format_func=lambda x: {
+            0: "Typical Angina",
+            1: "Atypical Angina",
+            2: "Non-Anginal Pain",
+            3: "No Pain"
+        }[x]
     )
 
-    trestbps = st.number_input(
-    "Resting Blood Pressure (mmHg)",
-    min_value=80,
-    max_value=250,
-    value=120,
-    step=1,
-    help="Blood pressure measured while resting."
-)
-    
-    fbs = st.selectbox(
-    "Fasting Blood Sugar > 120 mg/dl",
-    options=[0, 1],
-    format_func=lambda x: "Yes" if x == 1 else "No"
-)
-    
-    restecg = st.selectbox(
-    "Resting ECG Results",
-    options=[0, 1, 2],
-    format_func=lambda x: {
-        0: "Normal",
-        1: "ST-T abnormality",
-        2: "Left ventricular hypertrophy"
-    }[x]
-)
+    thalach = st.number_input("Max Heart Rate", 70, 210, 150)
+    trestbps = st.number_input("Resting BP", 80, 250, 120)
+
+    fbs = st.selectbox("Fasting Blood Sugar >120", [0, 1])
+    restecg = st.selectbox("Rest ECG", [0, 1, 2])
 
 with col2:
-    
-    exang = st.selectbox(
-    "Exercise Induced Angina",
-    options=[0, 1],
-    format_func=lambda x: {
-        0: "No",
-        1: "Yes"
-    }[x],
-    help="Chest pain triggered during exercise."
-)
-    
-    ca = st.selectbox(
-    "Number of Major Blood Vessels Visible in Test",
-    options=[0, 1, 2, 3],
-    help="Usually taken from an angiography test. Select the number reported by the doctor."
-)
 
-    oldpeak = st.number_input(
-    "ST Depression (Oldpeak)",
-    min_value=0.0,
-    max_value=6.5,
-    value=1.0,
-    step=0.1,
-    format="%.1f",
-    help="Value taken from a cardiac stress test report. Do not guess this value."
-)
+    exang = st.selectbox("Exercise Angina", [0, 1])
+    ca = st.selectbox("Major Vessels", [0, 1, 2, 3])
 
-    slope = st.selectbox(
-    "Slope of ST Segment",
-    options=[0, 1, 2],
-    format_func=lambda x: {
-        0: "Upsloping",
-        1: "Flat",
-        2: "Downsloping"
-    }[x],
-    help="Value from ECG stress test report."
-)
+    oldpeak = st.number_input("Oldpeak", 0.0, 6.5, 1.0)
+    slope = st.selectbox("Slope", [0, 1, 2])
+    thal = st.selectbox("Thal", [1, 2, 3])
 
-    thal = st.selectbox(
-    "Thalassemia Test Result",
-    options=[1, 2, 3],
-    format_func=lambda x: {
-        1: "Normal",
-        2: "Fixed Defect",
-        3: "Reversible Defect"
-    }[x],
-    help="Use the value from your medical report."
-)
-    
-    chol = st.number_input(
-    "Cholesterol (mg/dl)",
-    min_value=100,
-    max_value=600,
-    value=240,
-    step=1,
-    help="Blood cholesterol level from lab report"
-)
+    chol = st.number_input("Cholesterol", 100, 600, 240)
 
 st.divider()
 
-if st.button("Predict", use_container_width=True, type="primary"):
+if st.button("Predict", use_container_width=True):
 
     try:
 
-    prediction, probability = predict(
-    age,
-    sex,
-    cp,
-    thalach,
-    ca,
-    oldpeak,
-    thal,
-    chol,
-    trestbps,
-    exang,
-    slope,
-    fbs,
-    restecg
-)
+        prediction, probability = predict(
+            age, sex, cp, thalach, ca,
+            oldpeak, thal, chol, trestbps,
+            exang, slope, fbs, restecg
+        )
 
         st.subheader("Result")
 
         if prediction == 1:
-
             st.error("Heart Disease Detected")
-
-            st.metric(
-                "Risk Probability",
-                f"{probability}%"
-            )
-
-            st.warning(
-                "This is a screening tool only. Please consult a cardiologist."
-            )
-
         else:
-
             st.success("No Heart Disease Detected")
 
-            st.metric(
-                "Risk Probability",
-                f"{probability}%"
-            )
-
-            st.info(
-                "Low risk detected. Maintain a healthy lifestyle and schedule regular check-ups."
-            )
+        st.metric("Risk Probability", f"{probability}%")
 
     except Exception as e:
-
         st.error(f"Prediction error: {e}")
-
-        st.info(
-            "Please verify that the saved model and scaler files match."
-        )
