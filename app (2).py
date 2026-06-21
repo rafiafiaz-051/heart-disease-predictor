@@ -145,7 +145,7 @@ if st.button("🔍 Predict Risk", use_container_width=True, type="primary"):
 
         st.subheader("📊 Prediction Result")
 
-        if pred == 0:
+        if pred == 1:
             st.error("⚠️ **Heart Disease Risk Detected**")
             st.metric("Risk Probability", f"{proba}%",
                       delta="Above threshold", delta_color="inverse")
