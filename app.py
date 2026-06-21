@@ -184,19 +184,19 @@ if st.button("Predict", use_container_width=True, type="primary"):
 
     try:
 
-    prediction, probability = predict(
-    age,
-    sex,
-    cp,
-    thalach,
-    ca,
-    oldpeak,
-    thal,
-    chol,
-    trestbps,
-    exang,
-    slope
-)
+        prediction, probability = predict(
+            age,
+            sex,
+            cp,
+            thalach,
+            ca,
+            oldpeak,
+            thal,
+            chol,
+            trestbps,
+            exang,
+            slope
+        )
 
         st.subheader("Result")
 
@@ -233,6 +233,3 @@ if st.button("Predict", use_container_width=True, type="primary"):
         st.info(
             "Please verify that the saved model and scaler files match."
         )
-
-
-
