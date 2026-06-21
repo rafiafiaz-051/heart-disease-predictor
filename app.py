@@ -1,253 +1,203 @@
+# ============================================================
+#  Heart Disease Predictor — Streamlit App (Final Fixed)
+#  Run:  streamlit run app.py
+#  Files needed: champion_model.pkl + scaler.pkl
+# ============================================================
+
 import streamlit as st
 import numpy as np
 import joblib
 
-model = joblib.load('champion_model.pkl')
+# ── Load model & scaler ─────────────────────────────────────
+model  = joblib.load('champion_model.pkl')
 scaler = joblib.load('scaler.pkl')
-
 N_FEATURES = scaler.n_features_in_
 
-HIDDEN_MEANS = {
-    'fbs': 0.15,
-    'restecg': 0.53,
-    'age_group_encoded': 1.8,
-    'chol_high': 0.37
+# ── NEUTRAL hidden defaults ──────────────────────────────────
+# These are medians of the HEALTHY (no disease) class
+# NOT overall means — avoids biasing toward disease
+HIDDEN = {
+    'trestbps': 130.0,   # healthy class median resting BP
+    'chol'    : 234.0,   # healthy class median chol (< 240 = normal)
+    'fbs'     : 0.0,     # 85% of people have fbs=0
+    'restecg' : 0.0,     # 0 = normal ECG (most common healthy value)
+    'exang'   : 0.0,     # 0 = no exercise angina (healthy default)
+    'slope'   : 1.0,     # 1 = flat (most common value)
 }
 
-def predict(age, sex, cp, thalach, ca, oldpeak, thal, chol, trestbps, exang, slope, fbs, restecg):
+# ── PREDICTION FUNCTION ──────────────────────────────────────
+def predict(age, sex, cp, thalach, ca, oldpeak, thal):
 
-    features_13 = [
-        age,
-        sex,
-        cp,
-        trestbps,
-        chol,
-        fbs,
-        restecg,
-        thalach,
-        exang,
-        oldpeak,
-        slope,
-        ca,
-        thal
+    # chol_high derived from hidden chol (234 < 240 → 0 = normal)
+    chol_high = 1 if HIDDEN['chol'] > 240 else 0   # = 0 always now
+
+    # age_group from actual user age
+    if   age < 40: age_group = 0
+    elif age < 55: age_group = 1
+    elif age < 70: age_group = 2
+    else:          age_group = 3
+
+    # Build feature list in EXACT training order
+    features = [
+        age,                    # 1.  age
+        sex,                    # 2.  sex
+        cp,                     # 3.  cp
+        HIDDEN['trestbps'],     # 4.  trestbps   ← hidden
+        HIDDEN['chol'],         # 5.  chol        ← hidden
+        HIDDEN['fbs'],          # 6.  fbs         ← hidden
+        HIDDEN['restecg'],      # 7.  restecg     ← hidden
+        thalach,                # 8.  thalach
+        HIDDEN['exang'],        # 9.  exang       ← hidden
+        oldpeak,                # 10. oldpeak
+        HIDDEN['slope'],        # 11. slope       ← hidden
+        ca,                     # 12. ca
+        thal,                   # 13. thal
     ]
 
-
+    # Add engineered features if scaler was fitted on 15
     if N_FEATURES == 15:
+        features.append(age_group)   # 14. age_group_encoded
+        features.append(chol_high)   # 15. chol_high = 0 (neutral)
 
-        if age < 40:
-            age_group = 0
-        elif age < 55:
-            age_group = 1
-        elif age < 70:
-            age_group = 2
-        else:
-            age_group = 3
+    input_array  = np.array([features])          # shape (1, N) ✅
+    input_scaled = scaler.transform(input_array)
+    pred  = model.predict(input_scaled)[0]
+    proba = model.predict_proba(input_scaled)[0][1]
 
-        chol_high = 1 if chol > 240 else 0
+    return int(pred), round(float(proba) * 100, 1)
 
-        features_13.append(age_group)
-        features_13.append(chol_high)
 
-    print(features_13)
-
-    input_data = np.array([features_13])
-
-    input_scaled = scaler.transform(input_data)
-    prediction = model.predict(input_scaled)[0]
-    probability = model.predict_proba(input_scaled)[0][1]
-
-    return int(prediction), round(float(probability) * 100, 1)
-
+# ── UI ───────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Heart Disease Predictor",
     page_icon="❤️",
     layout="centered"
 )
 
-st.title("Heart Disease Risk Predictor")
-
-st.write(
-    "Fill in the fields below and click Predict to assess risk."
-)
-
+st.title("❤️ Heart Disease Risk Predictor")
+st.caption("Enter patient details below. All fields are required.")
 st.divider()
 
 col1, col2 = st.columns(2)
 
 with col1:
-
     age = st.number_input(
-        "Age (years)",
-        min_value=20,
-        max_value=80,
-        value=50,
-        step=1
+        "🎂 Age (years)",
+        min_value=20, max_value=80, value=45, step=1,
+        help="Patient age in years"
     )
 
     sex = st.selectbox(
-        "Gender",
+        "⚧ Gender",
         options=[1, 0],
         format_func=lambda x: "Male" if x == 1 else "Female"
     )
 
     cp = st.selectbox(
-    "Chest Pain Type",
-    options=[0, 1, 2, 3],
-    format_func=lambda x: {
-        0: "Typical Angina (Chest pain during physical activity)",
-        1: "Atypical Angina (Unusual chest pain that may occur at any time)",
-        2: "Non-Anginal Chest Pain (Chest pain not related to the heart)",
-        3: "No Chest Pain Symptoms"
-    }[x]
-)
-
-    thalach = st.number_input(
-        "Max Heart Rate (bpm)",
-        min_value=70,
-        max_value=210,
-        value=150,
-        step=1
+        "💔 Chest Pain Type",
+        options=[0, 1, 2, 3],
+        format_func=lambda x: {
+            0: "0 — Typical Angina",
+            1: "1 — Atypical Angina",
+            2: "2 — Non-Anginal Pain",
+            3: "3 — No Chest Pain"
+        }[x],
+        help="Type of chest pain experienced"
     )
 
-    trestbps = st.number_input(
-    "Resting Blood Pressure (mmHg)",
-    min_value=80,
-    max_value=250,
-    value=120,
-    step=1,
-    help="Blood pressure measured while resting."
-)
-    
-    fbs = st.selectbox(
-    "Fasting Blood Sugar > 120 mg/dl",
-    options=[0, 1],
-    format_func=lambda x: "Yes" if x == 1 else "No"
-)
-    
-    restecg = st.selectbox(
-    "Resting ECG Results",
-    options=[0, 1, 2],
-    format_func=lambda x: {
-        0: "Normal",
-        1: "ST-T abnormality",
-        2: "Left ventricular hypertrophy"
-    }[x]
-)
+    thalach = st.number_input(
+        "💓 Max Heart Rate (bpm)",
+        min_value=70, max_value=210, value=160, step=1,
+        help="Maximum heart rate achieved during exercise test"
+    )
 
 with col2:
-    
-    exang = st.selectbox(
-    "Exercise Induced Angina",
-    options=[0, 1],
-    format_func=lambda x: {
-        0: "No",
-        1: "Yes"
-    }[x],
-    help="Chest pain triggered during exercise."
-)
-    
     ca = st.selectbox(
-    "Number of Major Blood Vessels Visible in Test",
-    options=[0, 1, 2, 3],
-    help="Usually taken from an angiography test. Select the number reported by the doctor."
-)
+        "🩸 Major Vessels Coloured (0–3)",
+        options=[0, 1, 2, 3],
+        help="Number of major vessels coloured by fluoroscopy (from angiography report)"
+    )
 
     oldpeak = st.number_input(
-    "ST Depression (Oldpeak)",
-    min_value=0.0,
-    max_value=6.5,
-    value=1.0,
-    step=0.1,
-    format="%.1f",
-    help="Value taken from a cardiac stress test report. Do not guess this value."
-)
-
-    slope = st.selectbox(
-    "Slope of ST Segment",
-    options=[0, 1, 2],
-    format_func=lambda x: {
-        0: "Upsloping",
-        1: "Flat",
-        2: "Downsloping"
-    }[x],
-    help="Value from ECG stress test report."
-)
+        "📉 ST Depression (Oldpeak)",
+        min_value=0.0, max_value=6.5, value=0.0,
+        step=0.1, format="%.1f",
+        help="ST depression induced by exercise relative to rest (from ECG/stress test)"
+    )
 
     thal = st.selectbox(
-    "Thalassemia Test Result",
-    options=[1, 2, 3],
-    format_func=lambda x: {
-        1: "Normal",
-        2: "Fixed Defect",
-        3: "Reversible Defect"
-    }[x],
-    help="Use the value from your medical report."
-)
-    
-    chol = st.number_input(
-    "Cholesterol (mg/dl)",
-    min_value=100,
-    max_value=600,
-    value=240,
-    step=1,
-    help="Blood cholesterol level from lab report"
-)
+        "🧬 Thalassemia Result",
+        options=[1, 2, 3],
+        format_func=lambda x: {
+            1: "1 — Normal",
+            2: "2 — Fixed Defect",
+            3: "3 — Reversible Defect"
+        }[x],
+        help="Thalassemia blood disorder type from medical report"
+    )
 
 st.divider()
 
-if st.button("Predict", use_container_width=True, type="primary"):
-
+# ── Predict button ───────────────────────────────────────────
+if st.button("🔍 Predict Risk", use_container_width=True, type="primary"):
     try:
+        pred, proba = predict(age, sex, cp, thalach, ca, oldpeak, thal)
 
-        prediction, probability = predict(
-    age,
-    sex,
-    cp,
-    thalach,
-    ca,
-    oldpeak,
-    thal,
-    chol,
-    trestbps,
-    exang,
-    slope,
-    fbs,
-    restecg
-)
+        st.subheader("📊 Prediction Result")
 
-        st.subheader("Result")
-
-        if prediction == 1:
-
-            st.error("Heart Disease Detected")
-
-            st.metric(
-                "Risk Probability",
-                f"{probability}%"
-            )
-
+        if pred == 1:
+            st.error("⚠️ **Heart Disease Risk Detected**")
+            st.metric("Risk Probability", f"{proba}%",
+                      delta="Above threshold", delta_color="inverse")
             st.warning(
-                "This is a screening tool only. Please consult a cardiologist."
+                "⚕️ This is a **screening tool only**. "
+                "Please consult a cardiologist for proper diagnosis."
             )
-
         else:
-
-            st.success("No Heart Disease Detected")
-
-            st.metric(
-                "Risk Probability",
-                f"{probability}%"
-            )
-
+            st.success("✅ **Low Risk — No Heart Disease Detected**")
+            st.metric("Risk Probability", f"{proba}%",
+                      delta="Below threshold", delta_color="normal")
             st.info(
-                "Low risk detected. Maintain a healthy lifestyle and schedule regular check-ups."
+                "Regular health check-ups are still recommended. "
+                "Maintain a healthy lifestyle."
             )
+
+        # Progress bar for visual probability
+        st.write("**Risk Level:**")
+        st.progress(proba / 100)
+
+        # Show what was auto-filled
+        with st.expander("ℹ️ See auto-filled background values"):
+            st.caption(
+                "These 6 fields were not shown in the UI. "
+                "They are filled with neutral/healthy baseline values "
+                "to avoid biasing the prediction."
+            )
+            st.table({
+                "Hidden Field"  : ["Resting BP", "Cholesterol", "Fasting Sugar",
+                                   "Resting ECG", "Exercise Angina", "ST Slope"],
+                "Value Used"    : [130.0, 234.0, 0.0, 0.0, 0.0, 1.0],
+                "Why this value": [
+                    "Healthy class median",
+                    "Below 240 threshold (normal)",
+                    "0 = no elevated sugar (85% of patients)",
+                    "0 = normal ECG",
+                    "0 = no angina (healthy default)",
+                    "1 = flat slope (most common)"
+                ]
+            })
 
     except Exception as e:
-
-        st.error(f"Prediction error: {e}")
-
+        st.error(f"❌ Prediction error: {str(e)}")
         st.info(
-            "Please verify that the saved model and scaler files match."
+            f"Scaler expects {N_FEATURES} features. "
+            "Make sure champion_model.pkl and scaler.pkl are in the same folder."
         )
+
+# ── Footer ───────────────────────────────────────────────────
+st.divider()
+st.caption(
+    "SE-CD-638 Machine Learning | Dr. Aamir Arsalan | "
+    "UCI Heart Disease Dataset | KNN Champion Model (AUC: 89.66%)"
+)
+
