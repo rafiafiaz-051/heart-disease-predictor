@@ -14,7 +14,7 @@ HIDDEN_MEANS = {
     'exang': 0.33,
     'slope': 1.40,
     'age_group_encoded': 1.8,
-    'chol_high': 0.37,
+    
 }
 
 def predict(age, sex, cp, thalach, ca, oldpeak, thal, chol):
