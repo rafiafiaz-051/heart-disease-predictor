@@ -200,7 +200,7 @@ if st.button("Predict", use_container_width=True, type="primary"):
 
     try:
 
-    prediction, probability = predict(
+        prediction, probability = predict(
     age,
     sex,
     cp,
